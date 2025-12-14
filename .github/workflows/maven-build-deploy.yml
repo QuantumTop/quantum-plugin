@@ -1,4 +1,4 @@
-name: 'Maven Build and Deploy - Lib'
+name: 'Maven Build and Deploy - Plugin'
 
 on:
   workflow_dispatch:
@@ -180,8 +180,9 @@ jobs:
       built-modules: ${{ needs.quantum-lib-deploy.outputs.built-modules }}
     secrets:
       MAVEN_TOKEN: ${{ secrets.MAVEN_TOKEN }}
+
   quantum-plugin-deploy:
-    needs: quantum-lib-deploy
+    needs: quantum-common-deploy  # 🔧 修复：依赖 common
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.get-version.outputs.version }}
@@ -193,7 +194,7 @@ jobs:
         id: check-if-built
         run: |
           MODULE_NAME="${{inputs.repository-module}}"
-          BUILT_MODULES="${{ needs.quantum-lib-deploy.outputs.built-modules }}"
+          BUILT_MODULES="${{ needs.quantum-common-deploy.outputs.built-modules }}"  # 🔧 修复：使用 common 的输出
           
           if [[ ",$BUILT_MODULES," == *",$MODULE_NAME,"* ]]; then
             echo "⏭️  Module '$MODULE_NAME' already built, skipping..."
@@ -323,7 +324,7 @@ jobs:
         id: update-built-modules
         run: |
           MODULE_NAME="${{inputs.repository-module}}"
-          BUILT_MODULES="${{ needs.quantum-lib-deploy.outputs.built-modules }}"  # 🔧 修复：使用 lib 的输出而不是 parent 的
+          BUILT_MODULES="${{ needs.quantum-common-deploy.outputs.built-modules }}"  # 🔧 修复：使用 common 的输出
           
           if [ "${{ steps.check-if-built.outputs.skipped }}" == "false" ]; then
             # Add current module to the list
